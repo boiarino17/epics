@@ -44,6 +44,9 @@ STD=$(EPICS_SYNAPPS)/std-2-8
 AUTOSAVE=$(EPICS_SYNAPPS)/autosave-4-6
 CALC=$(EPICS_SYNAPPS)/calc-2-8
 MCA=$(EPICS_SYNAPPS)/mca-s55
+VME=$(EPICS_SYNAPPS)/vme-2-7
+
+DEVIOCSTATS=/home/levon/controls/R3.14.12.3/support/devIocStats-3.1.12
 
 SELF=$(TOP)
 
