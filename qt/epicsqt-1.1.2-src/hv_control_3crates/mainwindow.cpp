@@ -16,6 +16,10 @@ CrateButton *MainWindow::current_crate;
 HvCrate *MainWindow::hvcrate;
 QPushButton *MainWindow::bback;
 
+int HvCrate::crate_ioc_type; // my_n2:
+QString HvCrate::slot_label; // my_n2:
+QString HvCrate::channel_label; // my_n2:
+
 int HvCrate::params_read;
 int HvCrate::params_switch;
 int HvCrate::params_set;
@@ -33,203 +37,167 @@ QPushButton *HvCrate::bcrateoff;
 QPushButton *HvCrate::bstore;
 QPushButton *HvCrate::bload;
 QLabel *HvCrate::label_chnumber_title;
+QLabel *HvCrate::label_log_name;
 
-#define NCRATES 16
-
+QPushButton *HvCrate::bsetallchannels;
+int HvCrate::current_channel=-1;
+int HvCrate::current_parameter=-1;
 //int HvCrate::chs_num;
 //BoardButton *HvCrate::current_board_prev;
 
 /** ---------------------------------------*/
-char *epics_hbeat_siffix_parameter=".T"; // my_n:
+char *epics_hbeat_suffix_parameter=".T"; // my_n:
 int hbeat_param_number=15; // my_n;
+
+char *epics_log_name_suffix_parameter_caen=".DESC";
+char *epics_log_name_suffix_parameter_mpod="_stat.DESC";
 /** ----------------------------------------*/
 
-char *epics_siffixes_parameters_caen[]={".F",".E",".L","_pwonoff","_v0set","_i0set","_trip","_rampup","_rampdn"}; // vmon, imon, status
+char *epics_suffixes_parameters_caen[]={".F",".E",".L","_pwonoff","_v0set","_i0set","_trip","_rampup","_rampdn"}; // vmon, imon, status
 char *params_labels_caen[]={"vmon","imon","status","on/off","v0set","i0set","trip","rampup","rampdn"}; // vmon, imon, status
 
-char *epics_siffixes_parameters_wmpodhv[]={"_v_term","_i_rd","_stat","_switch","_v_set","_i_set","_i_trip_time","_vrise","_vfall"};
+char *epics_suffixes_parameters_wmpodhv[]={"_v_term","_i_rd","_stat_string","_switch","_v_set","_i_set","_i_trip_time","_vrise","_vfall"};
 
-/// char *epics_siffixes_parameters_caen[]={"L","pwonoff","v0set","i0set","trip","rampup","rampdn"}; // vmon, imon, status
+/// char *epics_suffixes_parameters_caen[]={"L","pwonoff","v0set","i0set","trip","rampup","rampdn"}; // vmon, imon, status
 
 char *statuses_1527[]={"ON","RUP","RDN","OVC","OVV","UNV","ExTrip","MAXV","ExDis","InTrip","CalEr", "ChUn"};
 char *statuses_527[]= {"ON","RUP","RDN","OVC","UNV","OVV","ExTrip","MAXV","     ","Kill",  "InTrip"};
 
 enum istatuses_1527 {ON,RUP,RDN,OVC,OVV,UNV,ExTrip,MAXV,ExDis,InTrip,CalEr, ChUn};
 //char *statuses_527[]= {"ON","RUP","RDN","OVC","UNV","OVV","ExTrip","MAXV","     ","Kill",  "InTrip"};
+
+
+
 //==================CONFIGURATION PIECE==============================================================
 
-char *board_names_by_crate[NCRATES][16]={
+//------  my_n2:
+#define NCRATES_CIOC 15
+#define NCRATES_CIOCOLD 1
+#define NCRATES_MIOC 1
 
-    {"B_HV000_0_P0", "B_HV000_1_P0", "B_HV000_2_P0", "B_HV000_3_P0",
-     "B_HV000_4_P0", "B_HV000_5_P0", "B_HV000_6_P0", "B_HV000_7_P0",
-     "B_HV000_8_P0", "B_HV000_9_P0", "B_HV000_10_P0","B_HV000_11_P0",
-     "B_HV000_12_P0","B_HV000_13_P0","B_HV000_14_P0","B_HV000_15_P0"} ,
+#define NCRATES 17
+#define NBOARDS 16
+//-------
+char ***board_names_by_crate_cioc=NULL; // my_n2:
 
-    {"B_HV001_0_P0", "B_HV001_1_P0", "B_HV001_2_P0", "B_HV001_3_P0",
-     "B_HV001_4_P0", "B_HV001_5_P0", "B_HV001_6_P0", "B_HV001_7_P0",
-     "B_HV001_8_P0", "B_HV001_9_P0", "B_HV001_10_P0","B_HV001_11_P0",
-     "B_HV001_12_P0","B_HV001_13_P0","B_HV001_14_P0","B_HV001_15_P0"} ,
 
-    {"B_HV002_0_P0", "B_HV002_1_P0",  "B_HV002_2_P0", "B_HV002_3_P0",
-     "B_HV002_4_P0", "B_HV002_5_P0",  "B_HV002_6_P0", "B_HV002_7_P0",
-     "B_HV002_8_P0", "B_HV002_9_P0",  "B_HV002_10_P0","B_HV002_11_P0",
-     "B_HV002_12_P0","B_HV002_13_P0", "B_HV002_14_P0","B_HV002_15_P0"} ,
-
-    {"B_HV003_0_P0", "B_HV003_1_P0",  "B_HV003_2_P0", "B_HV003_3_P0",
-     "B_HV003_4_P0", "B_HV003_5_P0",  "B_HV003_6_P0", "B_HV003_7_P0",
-     "B_HV003_8_P0", "B_HV003_9_P0",  "B_HV003_10_P0","B_HV003_11_P0",
-     "B_HV003_12_P0","B_HV003_13_P0", "B_HV003_14_P0","B_HV003_15_P0"} ,
-
-    {"B_HV004_0_P0", "B_HV004_1_P0",  "B_HV004_2_P0", "B_HV004_3_P0",
-     "B_HV004_4_P0", "B_HV004_5_P0",  "B_HV004_6_P0", "B_HV004_7_P0",
-     "B_HV004_8_P0", "B_HV004_9_P0",  "B_HV004_10_P0","B_HV004_11_P0",
-     "B_HV004_12_P0","B_HV004_13_P0", "B_HV004_14_P0","B_HV004_15_P0"} ,
-
-    {"B_HV005_0_P0", "B_HV005_1_P0",  "B_HV005_2_P0", "B_HV005_3_P0",
-     "B_HV005_4_P0", "B_HV005_5_P0",  "B_HV005_6_P0", "B_HV005_7_P0",
-     "B_HV005_8_P0", "B_HV005_9_P0",  "B_HV005_10_P0","B_HV005_11_P0",
-     "B_HV005_12_P0","B_HV005_13_P0", "B_HV005_14_P0","B_HV005_15_P0"} ,
-
-    {"B_HV006_0_P0", "B_HV006_1_P0",  "B_HV006_2_P0", "B_HV006_3_P0",
-     "B_HV006_4_P0", "B_HV006_5_P0",  "B_HV006_6_P0", "B_HV006_7_P0",
-     "B_HV006_8_P0", "B_HV006_9_P0",  "B_HV006_10_P0","B_HV006_11_P0",
-     "B_HV006_12_P0","B_HV006_13_P0", "B_HV006_14_P0","B_HV006_15_P0"} ,
-
-    {"B_HV007_0_P0", "B_HV007_1_P0",  "B_HV007_2_P0", "B_HV007_3_P0",
-     "B_HV007_4_P0", "B_HV007_5_P0",  "B_HV007_6_P0", "B_HV007_7_P0",
-     "B_HV007_8_P0", "B_HV007_9_P0",  "B_HV007_10_P0","B_HV007_11_P0",
-     "B_HV007_12_P0","B_HV007_13_P0", "B_HV007_14_P0","B_HV007_15_P0"} ,
-
-    {"B_HV008_0_P0", "B_HV008_1_P0",  "B_HV008_2_P0", "B_HV008_3_P0",
-     "B_HV008_4_P0", "B_HV008_5_P0",  "B_HV008_6_P0", "B_HV008_7_P0",
-     "B_HV008_8_P0", "B_HV008_9_P0",  "B_HV008_10_P0","B_HV008_11_P0",
-     "B_HV008_12_P0","B_HV008_13_P0", "B_HV008_14_P0","B_HV008_15_P0"} ,
-
-    {"B_HV009_0_P0", "B_HV009_1_P0",  "B_HV009_2_P0", "B_HV009_3_P0",
-     "B_HV009_4_P0", "B_HV009_5_P0",  "B_HV009_6_P0", "B_HV009_7_P0",
-     "B_HV009_8_P0", "B_HV009_9_P0",  "B_HV009_10_P0","B_HV009_11_P0",
-     "B_HV009_12_P0","B_HV009_13_P0", "B_HV009_14_P0","B_HV009_15_P0"} ,
-
-    {"B_HV010_0_P0", "B_HV010_1_P0",  "B_HV010_2_P0", "B_HV010_3_P0",
-     "B_HV010_4_P0", "B_HV010_5_P0",  "B_HV010_6_P0", "B_HV010_7_P0",
-     "B_HV010_8_P0", "B_HV010_9_P0",  "B_HV010_10_P0","B_HV010_11_P0",
-     "B_HV010_12_P0","B_HV010_13_P0", "B_HV010_14_P0","B_HV010_15_P0"} ,
-
-    {"B_HV011_0_P0", "B_HV011_1_P0",  "B_HV011_2_P0", "B_HV011_3_P0",
-     "B_HV011_4_P0", "B_HV011_5_P0",  "B_HV011_6_P0", "B_HV011_7_P0",
-     "B_HV011_8_P0", "B_HV011_9_P0",  "B_HV011_10_P0","B_HV011_11_P0",
-     "B_HV011_12_P0","B_HV011_13_P0", "B_HV011_14_P0","B_HV011_15_P0"} ,
-
-    {"B_HV012_0_P0", "B_HV012_1_P0",  "B_HV012_2_P0", "B_HV012_3_P0",
-     "B_HV012_4_P0", "B_HV012_5_P0",  "B_HV012_6_P0", "B_HV012_7_P0",
-     "B_HV012_8_P0", "B_HV012_9_P0",  "B_HV012_10_P0","B_HV012_11_P0",
-     "B_HV012_12_P0","B_HV012_13_P0", "B_HV012_14_P0","B_HV012_15_P0"} ,
-
-    {"B_HV013_0_P0", "B_HV013_1_P0",  "B_HV013_2_P0", "B_HV013_3_P0",
-     "B_HV013_4_P0", "B_HV013_5_P0",  "B_HV013_6_P0", "B_HV013_7_P0",
-     "B_HV013_8_P0", "B_HV013_9_P0",  "B_HV013_10_P0","B_HV013_11_P0",
-     "B_HV013_12_P0","B_HV013_13_P0", "B_HV013_14_P0","B_HV013_15_P0"} ,
-
+ char *board_names_by_crate_ciocold[NCRATES_CIOCOLD][NBOARDS]={ /// my_n2
     {"B_DCRB_HV000_0_P0", "B_DCRB_HV000_1_P0", "B_DCRB_HV000_2_P0", "B_DCRB_HV000_3_P0", "B_DCRB_HV000_4_P0",
      "B_DCRB_HV000_5_P0", "B_DCRB_HV000_6_P0", "B_DCRB_HV000_7_P0", "B_DCRB_HV000_8_P0", "B_DCRB_HV000_9_P0",
-     "","","" ,"","",""} ,
+     "","","" ,"","",""}
+ };
 
-    {"b_wmpod_hv000_0_P0", "b_wmpod_hv000_1_P0", "b_wmpod_hv000_2_P0", "b_wmpod_hv000_3_P0", "b_wmpod_hv000_4_P0",
-     "b_wmpod_hv000_5_P0", "b_wmpod_hv000_6_P0", "b_wmpod_hv000_7_P0", "b_wmpod_hv000_8_P0", "b_wmpod_hv000_9_P0",
+ char *board_names_by_crate_mioc[NCRATES_MIOC][NBOARDS]={ /// my_n2
+    {"B_SVTMPOD9_Sl0_P0", "B_SVTMPOD9_Sl1_P0", "B_SVTMPOD9_Sl2_P0", "B_SVTMPOD9_Sl3_P0", "B_SVTMPOD9_Sl4_P0",
+     "B_SVTMPOD9_Sl5_P0", "B_SVTMPOD9_Sl6_P0", "B_SVTMPOD9_Sl7_P0", "B_SVTMPOD9_Sl8_P0", "B_SVTMPOD9_Sl9_P0",
      "","","" ,"","",""}
 
     //    {"b_wmpod_hv000_0_P0", "b_wmpod_hv000_1_P0", "b_wmpod_hv000_2_P0","","","","","","","","","","" ,"","",""}
-                             };
+  };
 
-int board_types_by_crate[NCRATES][16]={
+ char *hv_crate_names_cioc[]={"HVTEST0", "HVFTOF6", "HVFTOF5", "HVFTOF4",
+                         "HVECAL1", "HVFTOF1", "HVFTOF2", "HVFTOF3",
+                         "HVECAL5", "HVECAL6", "HVECAL2", "HVECAL3",
+ //                       "HVECAL5",/* "HVECAL6", "HVECAL2",*/ "HVECAL3",
+                         "HVLTCC0", "HVECAL4", "HVCTOF0"};
 
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
+int **board_types_by_crate_cioc; // my_n2:
 
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
-    {HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535,
-     HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535, HvCrate::CAEN_A1535} ,
-
+int board_types_by_crate_ciocold[NCRATES_CIOCOLD][NBOARDS]={ /// my_n2
     {HvCrate::CAEN_A944, HvCrate::CAEN_A944, HvCrate::CAEN_A944, HvCrate::CAEN_A944, HvCrate::CAEN_A944, HvCrate::CAEN_A944,
      HvCrate::CAEN_A944, HvCrate::CAEN_A944, HvCrate::CAEN_A944, HvCrate::CAEN_A944, 0,0,0, 0,0,0},
+};
 
-    {HvCrate::WMPOD_HV, HvCrate::WMPOD_HV, HvCrate::WMPOD_HV, HvCrate::WMPOD_HV, HvCrate::WMPOD_HV,
-     HvCrate::WMPOD_HV, HvCrate::WMPOD_HV, HvCrate::WMPOD_HV, HvCrate::WMPOD_HV, HvCrate::WMPOD_HV,
+int board_types_by_crate_mioc[NCRATES_MIOC][NBOARDS]={ /// my_n2
+    {HvCrate::WMPOD_LV, HvCrate::WMPOD_LV, HvCrate::WMPOD_LV, 0, 0,
+     0,0,0, HvCrate::WMPOD_HV, 0,
      0,0,0, 0,0,0}
-                               };
+};
 
 char *hv_crate_names[]={"HVTEST0 \n CAEN 1527", "HVFTOF6 \n CAEN 1527", "HVFTOF5 \n CAEN 1527", "HVFTOF4 \n CAEN 4527",
                         "HVECAL1 \n CAEN 4527", "HVFTOF1 \n CAEN 4527", "HVFTOF2 \n CAEN 4527", "HVFTOF3 \n CAEN 1527",
                         "HVECAL5 \n CAEN 4527", "HVECAL6 \n CAEN 4527", "HVECAL2 \n CAEN 4527", "HVECAL3 \n CAEN 4527",
-                        "HVLTCC0 \n CAEN 1527", "HVECAL4 \n CAEN 4527", "HVDCRB \n CAEN 527", "HVSVT3 \n Wiener MPOD"};
+//                        "HVECAL5 \n CAEN 4527",/* "HVECAL6 \n CAEN 4527", "HVECAL2 \n CAEN 4527",*/ "HVECAL3 \n CAEN 4527",
+                        "HVLTCC0 \n CAEN 1527", "HVECAL4 \n CAEN 4527", "HVCTOF0 \n CAEN 1527", "HVDCRB \n CAEN 527",
+                        "HVSVT \n Wiener MPOD"};
 
 char hv_crate_types[]={CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_1527,
                        CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_1527,
                        CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_1527,
-                       CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_527, CrateButton::WMPOD };
+//                       CrateButton::CAEN_1527,/* CrateButton::CAEN_1527, CrateButton::CAEN_1527, */CrateButton::CAEN_1527,
+                       CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_1527, CrateButton::CAEN_527,
+                       CrateButton::WMPOD};
+
+//==================END OF CONFIGURATION PIECE==============================================================
+
+
+///----- my_n2:
+char *slot_labels_in_record_name_by_ioc_type[]=
+{"Sl","","Sl"};
+char *channel_labels_in_record_name_by_ioc_type[]=
+{"Ch","","Ch"};
+///------------
+
+
+
+//=============================================================================================== my_n2:
+/*
+char *fun_board_names_by_crate(int i, int j){
+ if(i<NCRATES_CIOC)return board_names_by_crate_cioc[i][j];
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD))return (char *)board_names_by_crate_ciocold[i-NCRATES_CIOC][j];
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD+NCRATES_MIOC))return (char *)board_names_by_crate_mioc[i-NCRATES_CIOC-NCRATES_CIOCOLD][j];
+}
+*/
+//------------
+char **fun_board_names_by_crate(int i){
+ if(i<NCRATES_CIOC)return board_names_by_crate_cioc[i];
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD))return (char **)board_names_by_crate_ciocold[i-NCRATES_CIOC];
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD+NCRATES_MIOC))return (char **)board_names_by_crate_mioc[i-NCRATES_CIOC-NCRATES_CIOCOLD];
+}
+//------------
+
+int *fun_board_types_by_crate(int i){
+ if(i<NCRATES_CIOC)return board_types_by_crate_cioc[i];
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD))return (int *)board_types_by_crate_ciocold[i-NCRATES_CIOC];
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD+NCRATES_MIOC))return (int *)board_types_by_crate_mioc[i-NCRATES_CIOC-NCRATES_CIOCOLD];
+}
+//------------
+void HvCrate::get_crate_ioc_type(int i){
+ if(i<NCRATES_CIOC)crate_ioc_type=HvCrate::CAEN_IOC;
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD))crate_ioc_type=HvCrate::CAEN_IOCOLD;
+ else if(i<(NCRATES_CIOC+NCRATES_CIOCOLD+NCRATES_MIOC))crate_ioc_type=HvCrate::MPOD_IOC;
+}
+//------------
+void gen_names_and_types_cioc(){
+
+    char tmp[1024];
+
+      board_names_by_crate_cioc = (char ***)malloc((sizeof(board_names_by_crate_cioc))*(NCRATES_CIOC));
+
+      board_types_by_crate_cioc = (int **)malloc((sizeof(board_types_by_crate_cioc))*(NCRATES_CIOC));
+
+     for(int i=0;i<NCRATES_CIOC;i++){
+       board_names_by_crate_cioc[i]= (char **)malloc((sizeof(board_names_by_crate_cioc))*NBOARDS);
+       board_types_by_crate_cioc[i] = (int *)malloc((sizeof(int))*(NBOARDS));
+      for(int j=0; j< NBOARDS; j++){
+      //   printf("1 %ld %d %d\n",sizeof(board_names_by_crate_cioc), nn, NBOARDS); fflush(stdout);
+
+      //sprintf(tmp, "B_%s_sl%d_P0", hv_crate_names[i],j);
+   ///       sprintf(tmp, "B_HV%03d_%s%d_P0", i,slot_labels_in_record_name_by_ioc_type[HvCrate::CAEN_IOC],j);
+       sprintf(tmp, "B_%s_%s%d_P0", hv_crate_names_cioc[i],slot_labels_in_record_name_by_ioc_type[HvCrate::CAEN_IOC],j);
+       //printf("%s %d %d len=%d\n", tmp, i, j, strlen(tmp)); fflush(stdout);
+      // printf("==%s==\n", tmp); fflush(stdout);
+       board_names_by_crate_cioc[i][j]=(char *)malloc(strlen(tmp)+1);
+      // printf("%s\n", tmp); fflush(stdout);
+       strcpy(board_names_by_crate_cioc[i][j], tmp);
+       board_types_by_crate_cioc[i][j]=HvCrate::CAEN_A1535;
+ //       printf("%s\n", tmp); fflush(stdout);
+      }
+     }
+
+}
+
+
 //===============================================================================================
 MainWindow *mainw;
 
@@ -238,7 +206,9 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-resize(907,757);
+resize(907+HvCrate::TABLE_XCELLLOG,757); /// my_n:
+gen_names_and_types_cioc();/// my_n2
+
     setenv("EPICS_CA_ADDR_LIST", "129.57.86.54", 1);  // dcrb1 (for old CAEN)
 
 
@@ -270,7 +240,7 @@ resize(907,757);
 
     bback = new  QPushButton(this);
     bback->setText("BACK");
-    bback->setGeometry(QRect(HvCrate::TABLE_XBASE-HvCrate::X_BOARDS, HvCrate::TABLE_YBASE+600, 110, 30));
+    bback->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE-HvCrate::X_BOARDS, HvCrate::TABLE_YBASE+600, 110, 30));
     bback->setVisible(false);
     connect(bback, SIGNAL(clicked()), this, SLOT(s_back()));
 
@@ -340,7 +310,7 @@ void MainWindow::s_back()
 
    //hvb[0]->setObjectName(QString::fromUtf8(ename));
    hvcrates[i]->setText( crate_names[i]);
-   hvcrates[i]->setGeometry(QRect(HvCrate::TABLE_XBASE-HvCrate::X_BOARDS ,HvCrate::TABLE_YBASE+i*40, 110, 40));
+   hvcrates[i]->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE-HvCrate::X_BOARDS ,HvCrate::TABLE_YBASE+i*40, 110, 40));
    hvcrates[i]->setVisible(true);
    connect(hvcrates[i], SIGNAL(clicked()), hvcrates[i], SLOT(s_crateDisplay()));
    connect(hvcrates[i], SIGNAL(clicked()), this, SLOT(s_crateListDelete()));
@@ -383,11 +353,14 @@ void CrateButton::s_crateDisplay(){
     //int types[]={HvCrate::CAEN_A1535, HvCrate::CAEN_A1535};
 //    int *types=board_types_by_crate[crate_index];
     //HvCrate HvCrate(fsm_names, 2);
-    int size=sizeof(board_names_by_crate[crate_index])/sizeof(board_names_by_crate[crate_index][0]);
+    int size=NBOARDS;/// my_n2: sizeof(board_names_by_crate[crate_index])/sizeof(board_names_by_crate[crate_index][0]);
  /// printf("ggg %d\n", size);fflush(stdout);
 
-    MainWindow::hvcrate=new HvCrate(board_types_by_crate[crate_index], board_names_by_crate[crate_index],
-                size, crate_type, crate_index);
+/// my_n2:    MainWindow::hvcrate=new HvCrate(board_types_by_crate[crate_index], board_names_by_crate[crate_index],
+///                size, crate_type, crate_index);
+    MainWindow::hvcrate=new HvCrate(fun_board_types_by_crate(crate_index), fun_board_names_by_crate(crate_index),
+                    size, crate_type, crate_index);/// my_n2:
+
     MainWindow::constructed=1;
     MainWindow::current_crate=this;
 
@@ -428,11 +401,14 @@ void HvCrate::s_destructor(){
     delete HvCrate::bturnoffallchannels;
     delete HvCrate::bcrateon;
     delete HvCrate::bcrateoff;
+    delete HvCrate::bsetallchannels;
+
     HvCrate::lab_cr_name=0;
     HvCrate::bturnonallchannels=0;
     HvCrate::bturnoffallchannels=0;
     HvCrate::bcrateon=0;
     HvCrate::bcrateoff=0;
+    HvCrate::bsetallchannels=0;
     delete HvCrate::bstore;
     delete HvCrate::bload;
 
@@ -583,9 +559,13 @@ HvCrate::HvCrate(int *types, char **fsm_names, int boards_number, int type, int 
     QFont font_db = warning_db->font();
     font_db.setPointSize(14);
     warning_db->setFont(font_db);
+//------------------------------------------------ my_n2:
+    get_crate_ioc_type(crate_index); // my_n2:
+    slot_label=QString(slot_labels_in_record_name_by_ioc_type[crate_ioc_type]);
+    channel_label=QString(channel_labels_in_record_name_by_ioc_type[crate_ioc_type]);
 /*--------------------- my_n: hbeat-------------------*/
     unit_not_connected=new QLabel(mainw);
-    unit_not_connected->setGeometry(QRect(HvCrate::TABLE_XBASE-HvCrate::X_BOARDS+130, HvCrate::TABLE_YBASE+600, 300, 30));
+    unit_not_connected->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE-HvCrate::X_BOARDS+130, HvCrate::TABLE_YBASE+600, 550, 30));
     //setGeometry(QRect(HvCrate::TABLE_XBASE-HvCrate::X_BOARDS, HvCrate::TABLE_YBASE+600, 110, 30));
     unit_not_connected->setFrameShape(QFrame::Box);
     //unit_not_connected->setText("wait until \n configuration storing/loading \n is finished \n (takes a few minutes)");
@@ -612,6 +592,9 @@ HvCrate::HvCrate(int *types, char **fsm_names, int boards_number, int type, int 
      else if(types[i] == WMPOD_HV){
       hvb[i]=new BoardButtonWMpod(mainw, ename);
      }
+     else if(types[i] == WMPOD_LV){
+      hvb[i]=new BoardButtonWMpodLv(mainw, ename);
+     }
       this->boards_number=bn;
      //hvb[0]->setObjectName(QString::fromUtf8(ename));
 
@@ -619,7 +602,7 @@ HvCrate::HvCrate(int *types, char **fsm_names, int boards_number, int type, int 
      sprintf(tmp,"board %02d", hvb[i]->board);
      hvb[i]->setVisible(true);
      hvb[i]->setText( tmp);
-     hvb[i]->setGeometry(QRect(HvCrate::TABLE_XBASE-HvCrate::X_BOARDS,HvCrate::TABLE_YBASE+i*30, 110, 30));
+     hvb[i]->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE-HvCrate::X_BOARDS,HvCrate::TABLE_YBASE+i*30, 110, 30));
 
      connect(hvb[i], SIGNAL(clicked()), hvb[i], SLOT(s_boardDisplay()));
     }
@@ -649,6 +632,12 @@ HvCrate::HvCrate(int *types, char **fsm_names, int boards_number, int type, int 
     connect(HvCrate::bcrateoff, SIGNAL(clicked()), this, SLOT(s_crateoff()));
 
 
+    HvCrate::bsetallchannels= new QPushButton(mainw);
+    HvCrate::bsetallchannels->setGeometry(QRect(TABLE_XBASE+600, HvCrate::TABLE_YBASE+HvCrate::SHIFT_Y+160, 90, 30));
+    HvCrate::bsetallchannels->setVisible(true);
+    HvCrate::bsetallchannels->setText("set \n all channels");
+    connect(HvCrate::bsetallchannels, SIGNAL(clicked()), this, SLOT(setAllChannels()));
+
     HvCrate::bstore= new QPushButton(mainw);
     HvCrate::bstore->setGeometry(QRect(TABLE_XBASE+600, HvCrate::TABLE_YBASE+530, 90, 30));
     HvCrate::bstore->setVisible(true);
@@ -668,6 +657,7 @@ HvCrate::HvCrate(int *types, char **fsm_names, int boards_number, int type, int 
 void BoardButton::s_boardDisplay(){
 
 if(MainWindow::hvcrate->warning_db->isVisible()) return;
+MainWindow::hvcrate->unit_not_connected->setVisible(false);
  boardConnect();
 //ggg->activate();
 //ggg->setVariableNameAndSubstitutions( "b_hv000_0_0_pwonoff" , 0, 0 );
@@ -682,8 +672,10 @@ void BoardButton::destruct(){
         delete HvCrate::label_hvpar[j];
     }
     delete HvCrate::label_chnumber_title;
+    delete HvCrate::label_log_name;
     for(int i=0;i<HvCrate::channels_num;i++){
      delete HvCrate::hvch[i].hbeat; // my_n:
+     delete HvCrate::hvch[i].log_name;
      delete HvCrate::hvch[i].label_chnumber;
      for(int j=0;j<HvCrate::params_read;j++){
          delete HvCrate::hvch[i].hvpar_read[j];
@@ -707,9 +699,15 @@ void BoardButton::construct(){
 //printf("construct\n");fflush(stdout);
     HvCrate::label_chnumber_title=new QLabel(mainw);
     HvCrate::label_chnumber_title->setText("#");
-    HvCrate::label_chnumber_title->setGeometry(QRect(HvCrate::TABLE_XBASE-30, HvCrate::TABLE_YBASE, 30, 20));
+    HvCrate::label_chnumber_title->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE-30, HvCrate::TABLE_YBASE, 30, 20));
     HvCrate::label_chnumber_title->setFrameShape(QFrame::Box);
     HvCrate::label_chnumber_title->setVisible(true);
+
+    HvCrate::label_log_name=new QLabel(mainw);
+    HvCrate::label_log_name->setText("log.name");
+    HvCrate::label_log_name->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE, HvCrate::TABLE_YBASE, HvCrate::TABLE_XCELLLOG, 20));
+    HvCrate::label_log_name->setFrameShape(QFrame::Box);
+    HvCrate::label_log_name->setVisible(true);
 
     for(int j=0;j<HvCrate::params_read;j++){
 
@@ -751,17 +749,30 @@ void BoardButton::construct(){
         HvCrate::hvch[i].hbeat  ->setVisible(false);
 
 /*-------------------------------------------------------------------------------------------------------------------*/
-
-
+        qs=QString( "some_name" );
+        HvCrate::hvch[i].log_name=new MyQCaLabel(qs,(QWidget *) mainw, -1, i );
+      //  connect(HvCrate::hvch[i].log_name, SIGNAL(dbValueChanged(QString)), HvCrate::hvch[i].log_name, SLOT(s_dbValueChanged(QString)) );
+        HvCrate::hvch[i].hb_isactivated_log_name=0;
+        HvCrate::hvch[i].log_name->setVisible(true);
+        QFont font_1 = HvCrate::hvch[i].log_name->font();
+        font_1.setPointSize(7);
+        HvCrate::hvch[i].log_name->setFont(font_1);
+        HvCrate::hvch[i].log_name->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE, HvCrate::TABLE_YBASE+i10*20, HvCrate::TABLE_XCELLLOG, 20));
+        HvCrate::hvch[i].log_name->setFrameShape(QFrame::Box);
+/*-------------------------------------------------------------------------------------------------------------------*/
         HvCrate::hvch[i].label_chnumber=new QLabel(mainw);
         HvCrate::hvch[i].label_chnumber->setText(QString::number(i));
-        HvCrate::hvch[i].label_chnumber->setGeometry(QRect(HvCrate::TABLE_XBASE-30, HvCrate::TABLE_YBASE+i10*20, 30, 20));
+        HvCrate::hvch[i].label_chnumber->setGeometry(QRect(HvCrate::TABLE_NEW_XBASE-30, HvCrate::TABLE_YBASE+i10*20, 30, 20));
         HvCrate::hvch[i].label_chnumber->setFrameShape(QFrame::Box);
         HvCrate::hvch[i].label_chnumber->setVisible(true);
 
      for(int j=0;j<HvCrate::params_read;j++){
          QString qs=QString( "some_name" );
-         HvCrate::hvch[i].hvpar_read[j]=new MyQCaLabel(qs,(QWidget *) mainw, j,i );
+         HvCrate::hvch[i].hvpar_read[j]=new MyQCaLabel(qs,(QWidget *) mainw, j,i ); // my_n
+         //QFont font_1 = HvCrate::hvch[i].hvpar_read[j]->font();
+         //font_1.setPointSize(7);
+         //HvCrate::hvch[i].hvpar_read[j]->setFont(font_1);
+
          connect(HvCrate::hvch[i].hvpar_read[j], SIGNAL(dbValueChanged(QString)), HvCrate::hvch[i].hvpar_read[j], SLOT(s_dbValueChanged(QString)) );
          HvCrate::hvch[i].hb_isactivated[j]=0;
 
@@ -788,7 +799,7 @@ void BoardButton::construct(){
      }
 
      for(int j=0;j<HvCrate::params_set;j++){
-         HvCrate::hvch[i].hvpar_set[j]=new QCaLineEdit( "some_name" , mainw );
+         HvCrate::hvch[i].hvpar_set[j]=new MyQCaLineEdit( "some_name" , mainw, j, i );
          HvCrate::hvch[i].hb_isactivated[j+HvCrate::params_read+HvCrate::params_switch]=0;
 
     //     HvCrate::hvch[i].hvpar_set[j]->setVisible(false);
@@ -803,7 +814,7 @@ HvCrate::constructed=1;
 }
 //========================================================================================
 //========================================================================================
-void HvCrate::s_crateon(){ //
+void HvCrate::s_crateon(){
 if(MainWindow::hvcrate->warning_db->isVisible()) return;
 
 int ison=1;
@@ -816,7 +827,7 @@ if (rval != 0) {
 
 }
 //========================================================================================
-void HvCrate::s_crateoff(){ //
+void HvCrate::s_crateoff(){
 if(MainWindow::hvcrate->warning_db->isVisible()) return;
 int ison=0;
 int rval = pthread_create(&thread_crateonoff, NULL, cb_thread_crateonoff, &ison );
@@ -828,7 +839,7 @@ if (rval != 0) {
 
 }
 //========================================================================================
-void HvCrate::s_crateonoff(int ison){ //
+void HvCrate::s_crateonoff(int ison){
     char tmp[300]; //temporal
    // float par;
 
@@ -843,12 +854,12 @@ void HvCrate::s_crateonoff(int ison){ //
     for(int ch=0;ch< hvb[i]->BOARD_CHS_NUM;ch++){
       for(int j=0;j<HvCrate::params_switch;j++){
 
-          en=hvb[i]->epics_name+"_"+QString().setNum(ch)+
-          QString(hvb[i]->epics_siffixes_parameters[j+HvCrate::params_read]);
-          strcpy(tmp,"caput -w 6 ");
+          en=hvb[i]->epics_name+"_"+channel_label+QString().setNum(ch)+
+          QString(hvb[i]->epics_suffixes_parameters[j+HvCrate::params_read]);
+          strcpy(tmp,"caput -w 2 ");
           strcat(tmp,en.toAscii());
-          if(!ison) strcat(tmp," 0 > /dev/null;");
-          else strcat(tmp," 1 > /dev/null;");
+          if(!ison) strcat(tmp," 0 > /dev/null 2>&1;");
+          else strcat(tmp," 1 > /dev/null 2>&1;");
 
           size+=strlen(tmp);
           if(counter==0)t=(char *)malloc(size+1);
@@ -871,7 +882,7 @@ void HvCrate::s_crateonoff(int ison){ //
 
 }
 //========================================================================================
-void HvCrate::s_store(){ // _db
+void HvCrate::s_store(){
   need_db_store=1;
   warning_db->setVisible(true);
   warning_db->setStyleSheet("QLabel { background : red; border: 1px solid black ; color : black; }");
@@ -882,7 +893,7 @@ void HvCrate::s_store(){ // _db
 }
 //========================================================================================
 //========================================================================================
-void HvCrate::s_store_process(char *store_file){ // _db
+void HvCrate::s_store_process(char *store_file){
     char tmp[300], tmp1[200], spar[30]; //temporal
     float par;
 
@@ -896,14 +907,16 @@ void HvCrate::s_store_process(char *store_file){ // _db
     for(int ch=0;ch< hvb[i]->BOARD_CHS_NUM;ch++){
       for(int j=0;j<HvCrate::params_set;j++){
          //for(int j=0;j<ps.size()-1;j++){
-          en=hvb[i]->epics_name+"_"+QString().setNum(ch)+
-          QString(hvb[i]->epics_siffixes_parameters[j+HvCrate::params_read+HvCrate::params_switch]);
-          strcpy(tmp,"caget ");
+          en=hvb[i]->epics_name+"_"+channel_label+QString().setNum(ch)+
+          QString(hvb[i]->epics_suffixes_parameters[j+HvCrate::params_read+HvCrate::params_switch]);
+          //strcpy(tmp,"echo > ");
+          strcpy(tmp,"caget -w 0.5 ");
           strcat(tmp,en.toAscii());
           strcat(tmp," > ");
-          strcat(tmp,"temp_config.txt");
+          strcat(tmp,"temp_config.txt 2>&1");
 //           printf("%s\n", tmp); fflush(stdout);
-          system(tmp);
+          //system("echo >");
+          int ret=system(tmp);
  //         printf("0\n"); fflush(stdout);
 //          fseek(fp1,0, SEEK_SET);
           fclose(fp1);
@@ -914,9 +927,16 @@ void HvCrate::s_store_process(char *store_file){ // _db
 
 //          printf("1\n"); fflush(stdout);
           fgets(tmp, 300, fp1);
+          //printf("22 =%s ret=%d\n", tmp, ret); fflush(stdout);
+          if(ret){//printf("2 =%s\n", tmp); fflush(stdout);
+            if(j==0)break;
+            else {par=-1;} /// i.e. negative
+          }
+          else {
 //          printf("2 =%s\n", tmp); fflush(stdout);
           sscanf(tmp,"%s %s",tmp1,spar);
           par=atof(spar);
+          }
  //         printf("= %s %.2f\n",tmp, par); fflush(stdout);
           if(j==0)fprintf(fp,"%d.%d %.2f ", hvb[i]->board, ch, par);
           else if(j<(HvCrate::params_set-1))fprintf(fp,"%.2f ", par);
@@ -930,7 +950,7 @@ void HvCrate::s_store_process(char *store_file){ // _db
 
 }
 //========================================================================================
-void HvCrate::s_load(){ //_db
+void HvCrate::s_load(){
   need_db_load=1;
   warning_db->setVisible(true);
   warning_db->setStyleSheet("QLabel { background : red; border: 1px solid black ; color : black; }");
@@ -943,7 +963,7 @@ void HvCrate::s_load(){ //_db
 }
 
 //========================================================================================
-void HvCrate::s_load_process(char *load_file){ //_db
+void HvCrate::s_load_process(char *load_file){
 
  FILE *fp;
 // fp=fopen("/misc/clas/clas12/R3.14.12.3/epicsqt-1.1.2-src/hv_control/db_config.txt","r");
@@ -998,7 +1018,7 @@ void HvCrate::s_load_process(char *load_file){ //_db
 // printf("end of loading\n");fflush(stdout);
 }
 //========================================================================================
-void HvCrate::load_db(int br, int ch, int i, vector<string> &ps ){ //_db
+void HvCrate::load_db(int br, int ch, int i, vector<string> &ps ){
 
   static int previous_br=-1;
 //  static int found_ch_number=-1;
@@ -1015,14 +1035,14 @@ void HvCrate::load_db(int br, int ch, int i, vector<string> &ps ){ //_db
   else{
 //     for(int j=0;j<HvCrate::params_set;j++){
       //for(int j=0;j<ps.size()-1;j++){
-       en=found_br->epics_name+"_"+QString().setNum(ch)+
-       QString(found_br->epics_siffixes_parameters[i-1+HvCrate::params_read+HvCrate::params_switch]);
+       en=found_br->epics_name+"_"+channel_label+QString().setNum(ch)+
+       QString(found_br->epics_suffixes_parameters[i-1+HvCrate::params_read+HvCrate::params_switch]);
 
 
        strcpy(tmp,"caput -w 6 ");
        strcat(tmp,en.toAscii());
        sprintf(tmp,"%s %.2f > /dev/null",tmp, par);
-               system(tmp);
+       if(par>=0) system(tmp);
      //  printf("loading %s %f\n", tmp, par); fflush(stdout);
     // }
   }
@@ -1035,8 +1055,6 @@ BoardButton * HvCrate::db_board_finding(int br){
 
   return NULL;
 }
-
-
 //========================================================================================
 void HvCrate::s_turnonallchannels(){
 if(MainWindow::hvcrate->warning_db->isVisible()) return;
@@ -1108,23 +1126,32 @@ onoff_records.clear();
  for(int i=f_ch;i<(f_ch+HvCrate::channels_num);i++){
      i10=i-f_ch;
 /*--------- heart beat" my_n: --------------------------*/
-     en=epics_name+"_"+QString().setNum(i)+QString(epics_hbeat_siffix_parameter);
+     en=epics_name+"_"+HvCrate::channel_label+QString().setNum(i)+QString(epics_hbeat_suffix_parameter); // my_n2
      HvCrate::hvch[i10].hbeat->setVariableNameAndSubstitutions( en , 0, 0 );
      if(HvCrate::hvch[i10].hb_isactivated_hbeat==0){
          HvCrate::hvch[i10].hbeat->activate();
          HvCrate::hvch[i10].hb_isactivated_hbeat=1;
      }
 /*------------------------------------------------------*/
+     en=epics_name+"_"+HvCrate::channel_label+QString().setNum(i)+QString(epics_log_name_suffix_parameter); // my_n2
+     HvCrate::hvch[i10].log_name->setVariableNameAndSubstitutions( en , 0, 0 );
+     if(HvCrate::hvch[i10].hb_isactivated_log_name==0){
+         HvCrate::hvch[i10].log_name->activate();
+         HvCrate::hvch[i10].hb_isactivated_log_name=1;
+     }
+/*------------------------------------------------------*/
   for(int j=0;j<HvCrate::params_read;j++){
       HvCrate::hvch[i10].hvpar_read[j]->setVisible(true);
-      if(!strcmp(".L",epics_siffixes_parameters[j])){
+      if(!strcmp(".L",epics_suffixes_parameters[j])){
        HvCrate::hvch[i10].hvpar_read[j]->setPrecision(0);
        HvCrate::hvch[i10].hvpar_read[j]->setUseDbPrecision(false);
       }
-      en=epics_name+"_"+QString().setNum(i)+QString(epics_siffixes_parameters[j]);
-      //char tmp[100]; // temporal
-//      strcpy(tmp, en.toAscii());
-//      printf("%s\n",tmp); fflush(stdout);
+      en=epics_name+"_"+HvCrate::channel_label+QString().setNum(i)+QString(epics_suffixes_parameters[j]);// my_n2
+/*
+      char tmp[100]; // temporal
+      strcpy(tmp, en.toAscii());
+      printf("%s\n",tmp); fflush(stdout);
+*/
       HvCrate::hvch[i10].hvpar_read[j]->setVariableNameAndSubstitutions( en , 0, 0 );
       //HvCrate::hvch[i10].hvpar_read[j]->setVariableName( en , 0);
       if(HvCrate::hvch[i10].hb_isactivated[j]==0){
@@ -1135,11 +1162,11 @@ onoff_records.clear();
   }
   for(int j=0;j<HvCrate::params_switch;j++){
       HvCrate::hvch[i10].hvpar_switch[j]->setVisible(true);
-      //if(!strcmp("L",epics_siffixes_parameters_caen[j+PARS_READ])){
+      //if(!strcmp("L",epics_suffixes_parameters_caen[j+PARS_READ])){
       // HvCrate::hvch[i10].hvpar_switch[j]->setPrecision(0);
       // HvCrate::hvch[i10].hvpar_switch[j]->setUseDbPrecision(false);
       //}
-      en=epics_name+"_"+QString().setNum(i)+QString(epics_siffixes_parameters[j+HvCrate::params_read]);
+      en=epics_name+"_"+HvCrate::channel_label+QString().setNum(i)+QString(epics_suffixes_parameters[j+HvCrate::params_read]);// my_n2
       char tmp[150]; //temporal
       strcpy(tmp, en.toAscii());
       onoff_records.push_back(string(tmp));
@@ -1156,13 +1183,13 @@ onoff_records.clear();
   }
   for(int j=0;j<HvCrate::params_set;j++){
       HvCrate::hvch[i10].hvpar_set[j]->setVisible(true);
-      //if(!strcmp("L",epics_siffixes_parameters_caen[j+PARS_READ])){
+      //if(!strcmp("L",epics_suffixes_parameters_caen[j+PARS_READ])){
       // HvCrate::hvch[i10].hvpar_switch[j]->setPrecision(0);
       // HvCrate::hvch[i10].hvpar_switch[j]->setUseDbPrecision(false);
       //}
-      en=epics_name+"_"+QString().setNum(i)+QString(epics_siffixes_parameters[j+HvCrate::params_read+HvCrate::params_switch]);
+      en=epics_name+"_"+HvCrate::channel_label+QString().setNum(i)+QString(epics_suffixes_parameters[j+HvCrate::params_read+HvCrate::params_switch]);// my_n2
       if(board_type==HvCrate::CAEN_A944 && j==1){  // old CAEN and i0set is modified in all channels of the board at once
-       en=epics_name+"_"+QString().setNum(f_ch)+QString(epics_siffixes_parameters[j+HvCrate::params_read+HvCrate::params_switch]);
+       en=epics_name+"_"+QString().setNum(f_ch)+QString(epics_suffixes_parameters[j+HvCrate::params_read+HvCrate::params_switch]);
 
       }
       //char tmp[100]; // temporal
@@ -1186,6 +1213,10 @@ int BoardButton::boardNameParser(char *epics_name){
 
 char *tmp1, *tmp2, *epics_name1;
 
+char tmpq[10]="_"; // my_n2:
+strcat(tmpq,HvCrate::slot_label.toAscii()); // my_n2:
+
+
  tmp2=epics_name;
  while((tmp1=strstr(tmp2,"_P"))){
   tmp2=tmp1+1;
@@ -1202,13 +1233,14 @@ char *tmp1, *tmp2, *epics_name1;
  strcpy(epics_name1, epics_name);
 
  tmp2=epics_name;
- while((tmp1=strstr(tmp2,"_"))){
+ while((tmp1=strstr(tmp2,tmpq))){ // my_n2: "_"
   tmp2=tmp1+1;
  }
 
- board=atoi(tmp2-1+strlen("_"));
+ board=atoi(tmp2-1+strlen(tmpq)); // my_n2: "_"
  *(tmp2-1)=0;
 
+/** my_n2:
  tmp2=epics_name;
  while((tmp1=strstr(tmp2,"_hv"))){
   tmp2=tmp1+1;
@@ -1216,7 +1248,7 @@ char *tmp1, *tmp2, *epics_name1;
  //printf("hello 1\n");
  //fflush(stdout);
  crate=atoi(tmp2-1+strlen("_hv"));
-
+*/
  tmp2=epics_name1; tmp1=0;
  while((tmp1=strstr(tmp2,"/"))){
   tmp2=tmp1+1;
@@ -1244,7 +1276,8 @@ BoardButtonCaenA1535::BoardButtonCaenA1535(QWidget *widget, char *ename) : Board
     HvCrate::params_num=HvCrate::params_read+HvCrate::params_switch+HvCrate::params_set;
     HvCrate::channels_num=0;
     BOARD_CHS_NUM=24;
-    epics_siffixes_parameters=epics_siffixes_parameters_caen;
+    epics_suffixes_parameters=epics_suffixes_parameters_caen;
+    epics_log_name_suffix_parameter=epics_log_name_suffix_parameter_caen;
     board_type=HvCrate::CAEN_A1535;
 }
 //===============================================================================================
@@ -1255,7 +1288,8 @@ BoardButtonCaenA944::BoardButtonCaenA944(QWidget *widget, char *ename) : BoardBu
     HvCrate::params_num=HvCrate::params_read+HvCrate::params_switch+HvCrate::params_set;
     HvCrate::channels_num=0;
     BOARD_CHS_NUM=24;
-    epics_siffixes_parameters=epics_siffixes_parameters_caen;
+    epics_suffixes_parameters=epics_suffixes_parameters_caen;
+    epics_log_name_suffix_parameter=epics_log_name_suffix_parameter_caen;
     board_type=HvCrate::CAEN_A944;
 }
 //===============================================================================================
@@ -1266,16 +1300,29 @@ BoardButtonWMpod::BoardButtonWMpod(QWidget *widget, char *ename) : BoardButton(w
     HvCrate::params_num=HvCrate::params_read+HvCrate::params_switch+HvCrate::params_set;
     HvCrate::channels_num=0;
     BOARD_CHS_NUM=16;
-    epics_siffixes_parameters=epics_siffixes_parameters_wmpodhv;
+    epics_suffixes_parameters=epics_suffixes_parameters_wmpodhv;
+    epics_log_name_suffix_parameter=epics_log_name_suffix_parameter_mpod;
+    board_type=HvCrate::WMPOD_HV;
+}
+//===============================================================================================
+BoardButtonWMpodLv::BoardButtonWMpodLv(QWidget *widget, char *ename) : BoardButton(widget, ename){
+    HvCrate::params_read=3;
+    HvCrate::params_switch=1;
+    HvCrate::params_set=5;
+    HvCrate::params_num=HvCrate::params_read+HvCrate::params_switch+HvCrate::params_set;
+    HvCrate::channels_num=0;
+    BOARD_CHS_NUM=8;
+    epics_suffixes_parameters=epics_suffixes_parameters_wmpodhv;
+    epics_log_name_suffix_parameter=epics_log_name_suffix_parameter_mpod;
     board_type=HvCrate::WMPOD_HV;
 }
 
 //===============================================================================================
 
 void MyQCaLabel::s_dbValueChanged(QString str){
-
-   static int first=1;
 /*
+   static int first=1;
+
     QString qs1;
     qs1=text();
     if(first){
@@ -1352,7 +1399,7 @@ void MyQCaLabel::s_dbValueChanged(QString str){
       }
       else if(hbeat==3){
         MainWindow::hvcrate->unit_not_connected->setVisible(true);
-        MainWindow::hvcrate->unit_not_connected->setText("Crate was off on the way");
+        MainWindow::hvcrate->unit_not_connected->setText("Hardware error(s): IOC reboot may help in some cases");
       }
    }
 /*----------------------------------------------------------------------*/
@@ -1461,10 +1508,35 @@ void MyQCaLabel::colorControl(QString &qs, QPalette &pal){
 
 }
 
+///========================================================================================================
+void	MyQCaLineEdit::mousePressEvent ( QMouseEvent * event ){
+
+HvCrate::current_channel=ichannel;
+HvCrate::current_parameter=parameter;
+//if(event); // to use event
+//printf("%d %d loading\n", ichannel, index_in_plot); fflush(stdout);
+
+}
+///========================================================================================================
 
 
 
+void HvCrate::setAllChannels(){
+    if(current_channel==-1)return;
+    QString vs= hvch[current_channel].hvpar_set[current_parameter]->text();
+ //   double v=vs.toFloat();
+//QString vs= QString::number(v, 'g', 1);
+ for(int i=0;i<HvCrate::channels_num;i++){
 
+    //int i10=i+1;
+    hvch[i].hvpar_set[current_parameter]->setText(vs);
+    emit hvch[i].hvpar_set[current_parameter]->s_returnPressed();
+ }
+
+//printf("yellow\n");fflush(stdout);
+
+}
+///========================================================================================================
 
 
 

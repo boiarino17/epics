@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'qwt_plot_panner.h'
 **
-** Created: Wed Oct 16 16:47:48 2013
+** Created: Tue Nov 3 12:39:20 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.4)
 **
 ** WARNING! All changes made in this file will be lost!

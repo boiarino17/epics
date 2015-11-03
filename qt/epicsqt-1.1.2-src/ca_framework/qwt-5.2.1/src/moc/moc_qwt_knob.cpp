@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'qwt_knob.h'
 **
-** Created: Wed Oct 16 16:47:55 2013
+** Created: Tue Nov 3 12:39:27 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.4)
 **
 ** WARNING! All changes made in this file will be lost!

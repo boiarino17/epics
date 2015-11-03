@@ -1,7 +1,7 @@
 /****************************************************************************
 ** Meta object code from reading C++ file 'mainwindow.h'
 **
-** Created: Fri May 30 14:40:36 2014
+** Created: Tue Nov 3 14:34:18 2015
 **      by: The Qt Meta Object Compiler version 63 (Qt 4.8.4)
 **
 ** WARNING! All changes made in this file will be lost!
@@ -169,6 +169,79 @@ int MyQCaLabel::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     }
     return _id;
 }
+static const uint qt_meta_data_MyQCaLineEdit[] = {
+
+ // content:
+       6,       // revision
+       0,       // classname
+       0,    0, // classinfo
+       1,   14, // methods
+       0,    0, // properties
+       0,    0, // enums/sets
+       0,    0, // constructors
+       0,       // flags
+       0,       // signalCount
+
+ // slots: signature, parameters, type, tag, flags
+      21,   15,   14,   14, 0x08,
+
+       0        // eod
+};
+
+static const char qt_meta_stringdata_MyQCaLineEdit[] = {
+    "MyQCaLineEdit\0\0event\0mousePressEvent(QMouseEvent*)\0"
+};
+
+void MyQCaLineEdit::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
+{
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        Q_ASSERT(staticMetaObject.cast(_o));
+        MyQCaLineEdit *_t = static_cast<MyQCaLineEdit *>(_o);
+        switch (_id) {
+        case 0: _t->mousePressEvent((*reinterpret_cast< QMouseEvent*(*)>(_a[1]))); break;
+        default: ;
+        }
+    }
+}
+
+const QMetaObjectExtraData MyQCaLineEdit::staticMetaObjectExtraData = {
+    0,  qt_static_metacall 
+};
+
+const QMetaObject MyQCaLineEdit::staticMetaObject = {
+    { &QCaLineEdit::staticMetaObject, qt_meta_stringdata_MyQCaLineEdit,
+      qt_meta_data_MyQCaLineEdit, &staticMetaObjectExtraData }
+};
+
+#ifdef Q_NO_DATA_RELOCATION
+const QMetaObject &MyQCaLineEdit::getStaticMetaObject() { return staticMetaObject; }
+#endif //Q_NO_DATA_RELOCATION
+
+const QMetaObject *MyQCaLineEdit::metaObject() const
+{
+    return QObject::d_ptr->metaObject ? QObject::d_ptr->metaObject : &staticMetaObject;
+}
+
+void *MyQCaLineEdit::qt_metacast(const char *_clname)
+{
+    if (!_clname) return 0;
+    if (!strcmp(_clname, qt_meta_stringdata_MyQCaLineEdit))
+        return static_cast<void*>(const_cast< MyQCaLineEdit*>(this));
+    return QCaLineEdit::qt_metacast(_clname);
+}
+
+int MyQCaLineEdit::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
+{
+    _id = QCaLineEdit::qt_metacall(_c, _id, _a);
+    if (_id < 0)
+        return _id;
+    if (_c == QMetaObject::InvokeMetaMethod) {
+        if (_id < 1)
+            qt_static_metacall(this, _c, _id, _a);
+        _id -= 1;
+    }
+    return _id;
+}
 static const uint qt_meta_data_CrateButton[] = {
 
  // content:
@@ -322,7 +395,7 @@ static const uint qt_meta_data_HvCrate[] = {
        6,       // revision
        0,       // classname
        0,    0, // classinfo
-       8,   14, // methods
+       9,   14, // methods
        0,    0, // properties
        0,    0, // enums/sets
        0,    0, // constructors
@@ -338,6 +411,7 @@ static const uint qt_meta_data_HvCrate[] = {
       88,    8,    8,    8, 0x08,
      103,    8,    8,    8, 0x08,
      115,    8,    8,    8, 0x08,
+     128,    8,    8,    8, 0x08,
 
        0        // eod
 };
@@ -346,7 +420,7 @@ static const char qt_meta_stringdata_HvCrate[] = {
     "HvCrate\0\0s_destructor()\0s_turnonallchannels()\0"
     "s_turnoffallchannels()\0s_store()\0"
     "s_load()\0cb_update_db()\0s_crateon()\0"
-    "s_crateoff()\0"
+    "s_crateoff()\0setAllChannels()\0"
 };
 
 void HvCrate::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, void **_a)
@@ -363,6 +437,7 @@ void HvCrate::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _id, voi
         case 5: _t->cb_update_db(); break;
         case 6: _t->s_crateon(); break;
         case 7: _t->s_crateoff(); break;
+        case 8: _t->setAllChannels(); break;
         default: ;
         }
     }
@@ -401,9 +476,9 @@ int HvCrate::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     if (_id < 0)
         return _id;
     if (_c == QMetaObject::InvokeMetaMethod) {
-        if (_id < 8)
+        if (_id < 9)
             qt_static_metacall(this, _c, _id, _a);
-        _id -= 8;
+        _id -= 9;
     }
     return _id;
 }

@@ -75,16 +75,40 @@ class MyQCaLabel : public QCaLabel
 
 public:
 
-    MyQCaLabel(QString &name, QWidget *w, int param, int channel) : QCaLabel(name, w){
+    MyQCaLabel(QString &name, QWidget *w, int param, int channel) : QCaLabel(name, w){ // my_n
        parameter=param; ichannel=channel;
     }
 private:
-  int ichannel;
+  int ichannel; // my_n
   int parameter;
   void colorControl(QString &qs, QPalette &pal);
 private slots:
     void s_dbValueChanged(QString str);//{printf("1\n");fflush(stdout);setText("hhh");};
 
+};
+//=================================================================
+class MyQCaLineEdit : public QCaLineEdit
+{
+
+   Q_OBJECT
+
+public:
+
+    MyQCaLineEdit(const QString &name, QWidget *w, int param, int channel) : QCaLineEdit(name, w){ // my_n
+       parameter=param; ichannel=channel;
+    }
+//public slots:
+    void s_returnPressed(){emit returnPressed();};
+private:
+  int ichannel; // my_n
+  int parameter;
+
+  void colorControl(QString &qs, QPalette &pal);
+private slots:
+    //void s_dbValueChanged(QString str);//{printf("1\n");fflush(stdout);setText("hhh");};
+ //  void s_returnPressed();
+
+   void mousePressEvent ( QMouseEvent * event );
 };
 //=================================================================
 class CrateButton : public QPushButton
@@ -101,6 +125,7 @@ class CrateButton : public QPushButton
       WMPOD
 
     };
+
 
 
   CrateButton(QWidget *widget, int index, int type) :  QPushButton(widget){
@@ -152,21 +177,31 @@ class HvCrate : public QObject // e.g. HV devive of chamber
 
     void load_db(int br, int ch, int i, vector<string> &ps );
     BoardButton *db_board_finding(int br);
-
+    void get_crate_ioc_type(int i); // my_n2:
 public:
 
     const static int SHIFT_Y=50;
-    const static int TABLE_XBASE=200;
+    const static int TABLE_XCELL=60;
+    const static int TABLE_XCELLLOG=160;
+    const static int TABLE_NEW_XBASE=200;
+    const static int TABLE_XBASE=TABLE_NEW_XBASE+TABLE_XCELLLOG;
     const static int TABLE_YBASE=40;//50+24+20; // smi++ is different
     const static int X_BOARDS=155;
+
+
+
     int need_db_store;
     int need_db_load;
     int db_under_processing;
     QLabel *warning_db;
-    QLabel *unit_not_connected;
+    QLabel *unit_not_connected; // my_n
     static int constructed;
     enum BOARD_TYPES{
-      CAEN_A1535, CAEN_A944, WMPOD_HV
+      CAEN_A1535, CAEN_A944, WMPOD_HV, WMPOD_LV
+
+    };
+    enum IOC_TYPES{ /// my_n2:
+      CAEN_IOC, CAEN_IOCOLD, MPOD_IOC
 
     };
 
@@ -179,6 +214,7 @@ public:
     void activate_after_config();
     void s_crateonoff(int ison);
 
+
     const static int PARS_READ=3;
     const static int PARS_SWITCH=1;
     const static int PARS_SET=5;
@@ -187,6 +223,10 @@ public:
     const static int MAX_DEVICES_PER_LOGIC_UNIT=16;
     static QLabel *label_hvpar[PARS_NUM];
     static QLabel *label_chnumber_title;
+    static QLabel *label_log_name; // log_name
+
+    static int current_channel;
+    static int current_parameter;
 
     static int crate_type;
 
@@ -197,15 +237,20 @@ public:
     static int channels_num;
     static int first_channel;
 
+    static int crate_ioc_type; // my_n2:
+    static QString slot_label; // my_n2:
+    static QString channel_label; // my_n2:
+
     struct HvChannel{
        QCaLabel *hvpar_read[PARS_READ];
        MyQCaComboBox *hvpar_switch[PARS_SWITCH];
-       QCaLineEdit *hvpar_set[PARS_SET];
+       MyQCaLineEdit *hvpar_set[PARS_SET];
        QLabel *label_chnumber;
-       QCaLabel *hbeat;
-
+       QCaLabel *hbeat; // my_n
+       QCaLabel *log_name;
        int hb_isactivated[PARS_NUM];
        int hb_isactivated_hbeat; // my_n: adding heart beat
+       int hb_isactivated_log_name;
 
        //int hb_isHidden[PARS_NUM];
     };
@@ -223,6 +268,9 @@ public:
    static QPushButton *bcrateoff;
    static QPushButton *bstore;
    static QPushButton *bload;
+
+   static QPushButton *bsetallchannels;
+
    BoardButton *hvb[MAX_DEVICES_PER_LOGIC_UNIT];
 
 private slots:
@@ -235,7 +283,7 @@ private slots:
 
     void s_crateon();
     void s_crateoff();
-
+    void setAllChannels();
 };
 /*
 //=================================================================
@@ -255,7 +303,8 @@ class BoardButton : public QPushButton
   HvCrate::BOARD_TYPES board_type;
     int crate, board, board_part;
     vector<string> onoff_records;
-    char **epics_siffixes_parameters;
+    char **epics_suffixes_parameters;
+    char *epics_log_name_suffix_parameter;
     int BOARD_CHS_NUM;
     void destruct();
 
@@ -324,6 +373,16 @@ class BoardButtonWMpod : public BoardButton
 
 public:
     BoardButtonWMpod(QWidget *widget, char *ename);
+
+
+};
+//=================================================================
+class BoardButtonWMpodLv : public BoardButton
+{
+
+
+public:
+    BoardButtonWMpodLv(QWidget *widget, char *ename);
 
 
 };
